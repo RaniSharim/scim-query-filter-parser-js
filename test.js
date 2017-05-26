@@ -94,9 +94,15 @@ describe('new Filter() [case-sensitive]', () => {
 	].forEach((test) => {
 		describe('`' + test.string + '`', () => {
 			var filter;
-			before(() => filter = new Filter(test.string, true));
+			var newFilter;
+			before(() => {
+				filter = new Filter(test.string, true);
+				var reconstructedFilter = Filter.getFilter(filter.tree);
+				newFilter = new Filter(reconstructedFilter, true);
+			});
 			it('should parse into an RPN stack', () => assert.deepEqual(filter.rpn, test.rpn));
 			it('should parse into an expression tree', () => assert.deepEqual(filter.tree, test.tree));
+			it('should reparse into an expression tree', () => assert.deepEqual(newFilter.tree, test.tree));
 		});
 	});
 });
@@ -171,9 +177,15 @@ describe('new Filter() [case-insensitive]', () => {
 	].forEach((test) => {
 		describe('`' + test.string + '`', () => {
 			var filter;
-			before(() => filter = new Filter(test.string));
+			var newFilter;
+			before(() => {
+				filter = new Filter(test.string);
+				var reconstructedFilter = Filter.getFilter(filter.tree);
+				newFilter = new Filter(reconstructedFilter);
+			});
 			it('should parse into an RPN stack', () => assert.deepEqual(filter.rpn, test.rpn));
 			it('should parse into an expression tree', () => assert.deepEqual(filter.tree, test.tree));
+			it('should reparse into an expression tree', () => assert.deepEqual(newFilter.tree, test.tree));
 		});
 	});
 });

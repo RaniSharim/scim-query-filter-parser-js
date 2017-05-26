@@ -152,6 +152,48 @@ class Filter {
 		return tree;
 	}
 
+	static getFilter (tree, addParan = false) {
+		if (!Array.isArray(tree)) {
+			if (tree) {
+				return tree;
+			}
+			else {
+				return '';
+			}
+		}
+		else {
+			if (tree.length === 0) {
+				return '';
+			}
+
+			const op = tree[0];
+			const left = Array.isArray(tree[1])?Filter.getFilter(tree[1], true):tree[1];
+			let right = '';
+			
+			if (tree.length < 3) {
+				right = '';
+			} 
+			else if (Array.isArray(tree[2])) {
+				right = ' '+Filter.getFilter(tree[2], true);
+			}
+			else if (typeof tree[2] === 'string') {
+				right = ' '+`"${tree[2]}"`;
+			}
+			else {
+				right = ' '+tree[2].toString();
+			}
+
+			let result = `${left} ${op}${right}`;
+
+			if (addParan) {
+				result = '(' + result + ')';
+			}
+
+			return result;				
+		}
+		
+	}
+
 	static traverse (path, resource) {
 		path = path.split('.');
 		resource = Object.keys(resource)
