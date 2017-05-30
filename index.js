@@ -16,13 +16,19 @@ const OPS = {
 	or: 1,
 };
 
+const UNARY_OPS = {
+	pr: 4	
+}
+
 const PAREN = '[\\(\\)]';
 const STR = '"(?:\\\\"|[^"])*"';
 const OP = `${Object.keys(OPS).join('|')}`;
+const UNARY_OP = `${Object.keys(UNARY_OPS).join('|')}`;
 const WORD = '[\\w\\.]+';
 const SEP = '\\s?';
 const NEXT_TOKEN = new RegExp(`^(${PAREN}|${STR}|${OP}|${WORD})${SEP}`);
 const IS_OPERATOR = new RegExp(`^(?:${OP})$`);
+const IS_UNRAY_OPERATOR = new RegExp(`^(?:${UNARY_OP})$`);
 
 
 // Filter
@@ -68,6 +74,8 @@ class Filter {
 	parseExpr () {
 		const ast = [];
 		var expectOp = 0;
+		var expectValue = 0;
+
 		while (this.tokens.length && this.tokens[0] !== ')') {
 			let token = this.tokens[0];
 
@@ -79,8 +87,18 @@ class Filter {
 
 			ast.push(token === '(' ? this.parseGroup() : this.tokens.shift());
 
-			if (OPS[ast[ast.length - 1]] !== 4)
+			if (OPS[ast[ast.length - 1]] !== 4) {
+				expectValue = expectOp;
 				expectOp ^= 1;
+			}
+		}
+
+		if (expectOp && (OPS[ast[ast.length - 1]] !== 4)) {
+			throw new Error(`Unexpected end of input. Expected operator.`);
+		}
+
+		if (expectValue) {
+			throw new Error(`Unexpected end of input. Expected value.`);			
 		}
 
 		return this.constructor.toRpn(ast);
