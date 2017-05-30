@@ -371,3 +371,51 @@ describe('filter.test', () => {
 	});
 
 });
+
+describe('parsing errors', () => {
+	it('should expect comperator before end of input', () => {
+		try {
+			const filter = new Filter('emails');
+		}
+		catch(e) {
+			assert.equal(e.message, 'Unexpected end of input. Expected comperator.')
+		}					
+	});
+	
+	it('should expect comperator after field', () => {
+		try {
+			const filter = new Filter('emails or');
+		}
+		catch(e) {
+			assert.equal(e.message, 'Unexpected operator. Expected comperator.')
+		}					
+	});
+
+	it('should expect value', () => {
+		try {
+			const filter = new Filter('emails eq');
+		}
+		catch(e) {
+			assert.equal(e.message, 'Unexpected end of input. Expected value.')
+		}					
+	});
+
+
+	it('should expect field', () => {
+		try {
+			const filter = new Filter('emails eq "crouppulled@example.org" or');
+		}
+		catch(e) {
+			assert.equal(e.message, 'Unexpected end of input. Expected field.')
+		}					
+	});
+
+	it('should expect and/or', () => {
+		try {
+			const filter = new Filter('emails eq "crouppulled@example.org" eq');
+		}
+		catch(e) {
+			assert.equal(e.message, 'Unexpected operator. Expected and/or.')
+		}					
+	});
+})

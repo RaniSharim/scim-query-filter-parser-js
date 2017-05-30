@@ -75,6 +75,12 @@ class Filter {
 		const ast = [];
 		var expectOp = 0;
 		var expectValue = 0;
+		var expectField = 1;
+		var expectOrAnd = 0;
+
+		if (this.tokens.length == 0) {
+			return this.constructor.toRpn(ast)
+		}
 
 		while (this.tokens.length && this.tokens[0] !== ')') {
 			let token = this.tokens[0];
@@ -85,20 +91,65 @@ class Filter {
 			if (!expectOp && IS_OPERATOR.test(token))
 				throw new Error(`Unexpected operator '${token}'.`);
 
+		    if (expectOrAnd && (token != 'and' && token != 'or')) {
+				throw new Error(`Unexpected operator. Expected and/or.`);
+			}
+
+		    if (!expectOrAnd && (token == 'and' || token == 'or')) {
+				throw new Error(`Unexpected operator. Expected comperator.`);
+			}
+
+
 			ast.push(token === '(' ? this.parseGroup() : this.tokens.shift());
 
-			if (OPS[ast[ast.length - 1]] !== 4) {
-				expectValue = expectOp;
+
+			if (token == '(') {
+				expectOrAnd = 1;
+				expectOp = 1;
+				expectValue = 0;
+				expectField = 0;
+			}
+			else if (OPS[ast[ast.length - 1]] !== 4) {
+				if (expectValue) {
+					expectOrAnd = 1;
+					expectValue = 0;
+					expectField = 0;
+				}
+				else {
+					expectOrAnd = 0;
+				}
+				
+				if (expectOp) {
+					if (token == 'or' || token == 'and') {
+						expectField = 1;
+						expectValue = 0;
+					}
+					else {
+						expectField = 0;
+						expectValue = 1;						
+					}
+				}
 				expectOp ^= 1;
+			}
+			else {
+				expectOrAnd = 1;
+				expectField = 0;
+				expectValue = 0;
 			}
 		}
 
-		if (expectOp && (OPS[ast[ast.length - 1]] !== 4)) {
-			throw new Error(`Unexpected end of input. Expected operator.`);
-		}
+		if (!Array.isArray(ast[ast.length - 1])) {
+			if (expectOp && (OPS[ast[ast.length - 1]] !== 4) && (!expectOrAnd)) {
+				throw new Error(`Unexpected end of input. Expected comperator.`);
+			}
 
-		if (expectValue) {
-			throw new Error(`Unexpected end of input. Expected value.`);			
+			if (expectValue && (!expectOrAnd)) {
+				throw new Error(`Unexpected end of input. Expected value.`);			
+			}
+
+			if (expectField) {
+				throw new Error(`Unexpected end of input. Expected field.`);			
+			}
 		}
 
 		return this.constructor.toRpn(ast);
